@@ -3,12 +3,13 @@
  * Fork: jazzahupwork-boop/mcp-firestore-server v2.0.1-zapphire1
  * Spec: spec-hermes-mcp-connector-architecture-v1 V1.2
  *
- * SECURITY NOTE — Invariant 4 / SPEC-AMEND-04:
- * The spec invariant shorthand references /etc/mcp-secrets/ — this is the
- * FOREMAN credential directory. The Hermes credential path is
- * /etc/mcp-secrets-hermes/ and is configured by the systemd EnvironmentFile
- * at deploy time (SS-3 scope). This module does NOT reference any
- * credential path.
+ * SECURITY NOTE — Invariant 4 / SPEC-AMEND-04 (path distinction):
+ * The spec invariant shorthand refers to the FOREMAN credential directory
+ * (the path WITHOUT the '-hermes' suffix). The Hermes credential directory
+ * is the path WITH '-hermes' suffix and is injected by the systemd
+ * EnvironmentFile at deploy time (SS-3 scope).
+ * This module does NOT reference any credential path — all secrets are
+ * accessed via environment variables set externally by systemd.
  *
  * HARD-CODED WRITE EXCLUSIONS — Invariant 5:
  * 'knowledge' and 'okg' collections CANNOT appear in the write path

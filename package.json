@@ -1,6 +1,6 @@
 {
   "name": "@nerd305/mcp-firestore-server",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "MCP server for Firebase Firestore operations",
   "main": "index.js",
   "type": "module",
@@ -8,7 +8,8 @@
     "mcp-firestore-server": "./index.js"
   },
   "scripts": {
-    "start": "node index.js"
+    "start": "node index.js",
+    "test": "node --test src/__tests__/allowlist.test.js"
   },
   "keywords": [
     "mcp",

@@ -10,6 +10,8 @@ import { dirname, join } from "path";
 import { initFirebase, getDb } from "./firebase.js";
 import { getToolDefinitions, getHandler } from "./tools/index.js";
 import { buildResponse, buildErrorResponse } from "./helpers/response.js";
+import { enforceAllowlist, validateAllowlistConfig } from "./allowlist.js";
+import { verifyToolDescriptionHash } from "./integrity.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const pkg = JSON.parse(readFileSync(join(__dirname, "../package.json"), "utf8"));
@@ -33,6 +35,12 @@ export async function startServer() {
   try {
     console.error("Starting Firestore MCP Server...");
 
+    // ZAPPHIRE: Validate allowlist env var format before any other init.
+    // Throws on invalid format (e.g. path traversal characters in collection names).
+    // Process exits via catch block below. Satisfies UT10.
+    validateAllowlistConfig();
+    console.error("[ALLOWLIST] Configuration validated");
+
     // Initialize Firebase with dual-endpoint support
     const { defaultTarget, availableTargets } = initFirebase();
 
@@ -55,6 +63,10 @@ export async function startServer() {
 
     // Cache tool definitions (immutable after init)
     const toolDefinitions = getToolDefinitions(availableTargets, defaultTarget);
+
+    // ZAPPHIRE: Verify tool description integrity at startup — Invariant 9.
+    // Throws and aborts if descriptions have been tampered with.
+    verifyToolDescriptionHash(toolDefinitions);
 
     const server = new Server(
       {
@@ -81,6 +93,14 @@ export async function startServer() {
     server.setRequestHandler(CallToolRequestSchema, async request => {
       const { name, arguments: args } = request.params;
       console.error(`Tool called: ${name}`);
+
+      // ZAPPHIRE: Enforce collection allowlist BEFORE handler dispatch.
+      // Returns fixed sanitised error — never exposes collection name or
+      // allowlist contents in response body (ENV-R-02 defence).
+      const allowlistResult = enforceAllowlist(name, args);
+      if (!allowlistResult.permitted) {
+        return buildErrorResponse(new Error(allowlistResult.reason));
+      }
 
       try {
         const handler = getHandler(name);

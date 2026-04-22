@@ -4,7 +4,12 @@ import * as queryWithWhere from "./query-with-where.js";
 import * as listCollections from "./list-collections.js";
 import * as createDocument from "./create-document.js";
 import * as updateDocument from "./update-document.js";
-import * as deleteDocument from "./delete-document.js";
+// NOTE: deleteDocument intentionally omitted.
+// D2 Director decision — SS-B 2026-04-23:
+// Deletion is Night Manager scope only. Hermes flags items for deletion by
+// setting a status field in hermes-staging; the Night Manager executes the
+// actual Firestore delete. This structural removal eliminates the entire
+// delete attack surface from the Hermes agent layer.
 import * as countDocuments from "./count-documents.js";
 import * as batchGet from "./batch-get.js";
 
@@ -15,7 +20,7 @@ const tools = [
   listCollections,
   createDocument,
   updateDocument,
-  deleteDocument,
+  // delete_document: removed — see note above
   countDocuments,
   batchGet,
 ];
